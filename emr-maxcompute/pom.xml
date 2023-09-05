@@ -10,7 +10,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>emr-maxcompute_2.11</artifactId>
+    <artifactId>emr-maxcompute_2.12</artifactId>
     <packaging>jar</packaging>
     <name>Aliyun E-MapReduce External MaxCompute Support</name>
 
@@ -63,10 +63,6 @@
             <groupId>com.aliyun.odps</groupId>
             <artifactId>odps-sdk-core</artifactId>
             <exclusions>
-                <exclusion>
-                    <groupId>com.aliyun.odps</groupId>
-                    <artifactId>odps-sdk-core</artifactId>
-                </exclusion>
                 <exclusion>
                     <groupId>org.codehaus.jackson</groupId>
                     <artifactId>jackson-mapper-asl</artifactId>
@@ -148,6 +144,53 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.2.4</version>
+                <configuration>
+                    <shadedArtifactAttached>false</shadedArtifactAttached>
+                    <artifactSet>
+                        <includes>
+                            <include>com.aliyun.odps:*</include>
+                            <include>com.alibaba:fastjson</include>
+                            <include>stax:stax</include>
+                            <include>net.sourceforge.javacsv:javacsv</include>
+                            <include>javax.mail:mail</include>
+                            <include>org.antlr:antlr4</include>
+                            <include>com.google.guava:guava</include>
+                            <include>org.lz4:lz4-pure-java</include>
+                            <include>xpp3:*</include>
+                            <include>com.ibm.icu:icu4j</include>
+                            <include>org.glassfish:javax.json</include>
+                            <include>org.antlr:ST4</include>
+                            <include>org.abego.treelayout:org.abego.treelayout.core</include>
+                        </includes>
+                    </artifactSet>
+                    <relocations>
+                        <relocation>
+                            <pattern>com.alibaba.fastjson</pattern>
+                            <shadedPattern>com.aliyun.emr.shaded.com.alibaba.fastjson</shadedPattern>
+                        </relocation>
+                        <relocation>
+                            <pattern>com.google.common</pattern>
+                            <shadedPattern>com.aliyun.emr.shaded.com.google.common</shadedPattern>
+                        </relocation>
+                    </relocations>
+                    <transformers>
+                        <transformer
+                                implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                    </transformers>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

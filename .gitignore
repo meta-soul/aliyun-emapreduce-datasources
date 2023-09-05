@@ -24,3 +24,4 @@ assembly/target/*
 *.iml
 log.txt
 .DS_Store
+dependency-reduced-pom.xml
