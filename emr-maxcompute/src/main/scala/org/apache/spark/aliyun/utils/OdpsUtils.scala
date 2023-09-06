@@ -29,7 +29,11 @@ import org.apache.spark.sql.catalyst.util.{ArrayBasedMapData, GenericArrayData}
 import org.apache.spark.sql.types._
 import org.apache.spark.unsafe.types.UTF8String
 
-class OdpsUtils(odps: Odps) extends Logging{
+import java.sql.{Date, Timestamp}
+import java.time.{Instant, LocalDate}
+
+class OdpsUtils(odps: Odps) extends Logging {
+
   import OdpsUtils._
 
   /**
@@ -38,53 +42,53 @@ class OdpsUtils(odps: Odps) extends Logging{
    * <h4>Examples</h4>
    * <blockquote>
    * <table border=0 cellspacing=3 cellpadding=0 summary="Examples of checking
-    * ODPS table and partition existence">
-   *     <tr bgcolor="#ccccff">
-   *         <th align=left>Type of ODPS table
-   *         <th align=left>Table exist
-   *         <th align=left>Partition exist
-   *         <th align=left>Return
-   *     <tr>
-   *         <td><code>Non-partitioned</code>
-   *         <td><code>false</code>
-   *         <td><code>-</code>
-   *         <td><code>(false, false)</code>
-   *     <tr bgcolor="#eeeeff">
-   *         <td><code>Non-partitioned</code>
-   *         <td><code>true</code>
-   *         <td><code>-</code>
-   *         <td><code>(true, false)</code>
-   *     <tr>
-   *         <td><code>Partitioned</code>
-   *         <td><code>true</code>
-   *         <td><code>false</code>
-   *         <td><code>(true, false)</code>
-   *     <tr bgcolor="#eeeeff">
-   *         <td><code>Partitioned</code>
-   *         <td><code>true</code>
-   *         <td><code>true</code>
-   *         <td><code>(true, true)</code>
-   *     <tr>
-   *         <td><code>Partitioned</code>
-   *         <td><code>false</code>
-   *         <td><code>-</code>
-   *         <td><code>(false, false)</code>
+   * ODPS table and partition existence">
+   * <tr bgcolor="#ccccff">
+   * <th align=left>Type of ODPS table
+   * <th align=left>Table exist
+   * <th align=left>Partition exist
+   * <th align=left>Return
+   * <tr>
+   * <td><code>Non-partitioned</code>
+   * <td><code>false</code>
+   * <td><code>-</code>
+   * <td><code>(false, false)</code>
+   * <tr bgcolor="#eeeeff">
+   * <td><code>Non-partitioned</code>
+   * <td><code>true</code>
+   * <td><code>-</code>
+   * <td><code>(true, false)</code>
+   * <tr>
+   * <td><code>Partitioned</code>
+   * <td><code>true</code>
+   * <td><code>false</code>
+   * <td><code>(true, false)</code>
+   * <tr bgcolor="#eeeeff">
+   * <td><code>Partitioned</code>
+   * <td><code>true</code>
+   * <td><code>true</code>
+   * <td><code>(true, true)</code>
+   * <tr>
+   * <td><code>Partitioned</code>
+   * <td><code>false</code>
+   * <td><code>-</code>
+   * <td><code>(false, false)</code>
    * </table>
    * </blockquote>
    *
    * @param project The name of ODPS project.
-   * @param table The name of ODPS table.
-   * @param pname The name of ODPS table partition, if partitioned table.
+   * @param table   The name of ODPS table.
+   * @param pname   The name of ODPS table partition, if partitioned table.
    */
   def checkTableAndPartition(
-      project: String,
-      table: String,
-      pname: String): (Boolean, Boolean) = {
+                              project: String,
+                              table: String,
+                              pname: String): (Boolean, Boolean) = {
     val partitionSpec_ = new PartitionSpec(pname)
     odps.setDefaultProject(project)
     val tables = odps.tables()
     val tableExist = tables.exists(table)
-    if(!tableExist) {
+    if (!tableExist) {
       logWarning("table " + table + " do not exist!")
       return (false, false)
     }
@@ -94,7 +98,7 @@ class OdpsUtils(odps: Odps) extends Logging{
       .map(e => e.getPartitionSpec)
       .filter(f => f.toString.equals(partitionSpec_.toString))
     val partitionExist = if (partitionFilter.size == 0) false else true
-    if(partitionExist) {
+    if (partitionExist) {
       (true, true)
     } else {
       (true, false)
@@ -103,18 +107,19 @@ class OdpsUtils(odps: Odps) extends Logging{
 
   /**
    * Drop specific partition of ODPS table.
+   *
    * @param project The name of ODPS project.
-   * @param table The name of ODPS table.
-   * @param pname The name of ODPS table partition, if partitioned table.
+   * @param table   The name of ODPS table.
+   * @param pname   The name of ODPS table partition, if partitioned table.
    * @return Success or not.
    */
   def dropPartition(
-      project: String,
-      table: String,
-      pname: String): Boolean = {
+                     project: String,
+                     table: String,
+                     pname: String): Boolean = {
     try {
       val (_, partitionE) = checkTableAndPartition(project, table, pname)
-      if(!partitionE) {
+      if (!partitionE) {
         return true
       }
       odps.setDefaultProject(project)
@@ -132,16 +137,17 @@ class OdpsUtils(odps: Odps) extends Logging{
 
   /**
    * Drop specific ODPS table.
+   *
    * @param project The name of ODPS project.
-   * @param table The name of ODPS table.
+   * @param table   The name of ODPS table.
    * @return Success or not.
    */
   def dropTable(
-      project: String,
-      table: String): Boolean = {
+                 project: String,
+                 table: String): Boolean = {
     try {
       val (tableE, _) = checkTableAndPartition(project, table, "random")
-      if(!tableE) {
+      if (!tableE) {
         return true
       }
       odps.setDefaultProject(project)
@@ -158,34 +164,35 @@ class OdpsUtils(odps: Odps) extends Logging{
   /**
    * Create ODPS table.
    *
-   * @param project Name of odps project.
-   * @param table Name of odps table.
-   * @param schema refer to {{TableSchema}}.
+   * @param project     Name of odps project.
+   * @param table       Name of odps table.
+   * @param schema      refer to {{TableSchema}}.
    * @param ifNotExists Fail or not if target table exists.
    */
   def createTable(
-      project: String,
-      table: String,
-      schema: TableSchema,
-      ifNotExists: Boolean): Unit = {
+                   project: String,
+                   table: String,
+                   schema: TableSchema,
+                   ifNotExists: Boolean): Unit = {
     odps.setDefaultProject(project)
     odps.tables().create(table, schema, ifNotExists)
   }
 
   /**
    * Create specific partition of ODPS table.
+   *
    * @param project The name of ODPS project.
-   * @param table The name of ODPS table.
-   * @param pname The name of ODPS table partition, if partitioned table.
+   * @param table   The name of ODPS table.
+   * @param pname   The name of ODPS table partition, if partitioned table.
    * @return Success or not.
    */
   def createPartition(
-      project: String,
-      table: String,
-      pname: String): Boolean = {
+                       project: String,
+                       table: String,
+                       pname: String): Boolean = {
     val partitionSpec_ = new PartitionSpec(pname)
     val (tableE, partitionE) = checkTableAndPartition(project, table, pname)
-    if(!tableE) {
+    if (!tableE) {
       logWarning("table " + table + " do not exist, FAILED.")
       return false
     } else if (partitionE) {
@@ -208,13 +215,14 @@ class OdpsUtils(odps: Odps) extends Logging{
 
   /**
    * Get the table schema of ODPS table.
-   * @param project The name of ODPS project.
-   * @param table The name of ODPS table.
+   *
+   * @param project     The name of ODPS project.
+   * @param table       The name of ODPS table.
    * @param isPartition Is partition column or not.
    * @return
    */
   def getTableSchema(project: String, table: String, isPartition: Boolean):
-      Array[(String, TypeInfo)] = {
+  Array[(String, TypeInfo)] = {
     odps.setDefaultProject(project)
     val schema = odps.tables().get(table).getSchema
     val columns = if (isPartition) schema.getPartitionColumns else schema.getColumns
@@ -223,13 +231,14 @@ class OdpsUtils(odps: Odps) extends Logging{
 
   /**
    * Get information of specific column via column name.
+   *
    * @param project The name of ODPS project.
-   * @param table The name of ODPS table.
-   * @param name The name of specific column.
+   * @param table   The name of ODPS table.
+   * @param name    The name of specific column.
    * @return Column index and type.
    */
   def getColumnByName(project: String, table: String, name: String):
-      (String, String) = {
+  (String, String) = {
     odps.setDefaultProject(project)
     val schema = odps.tables().get(table).getSchema
     val idx = schema.getColumnIndex(name)
@@ -241,13 +250,14 @@ class OdpsUtils(odps: Odps) extends Logging{
 
   /**
    * Get information of specific column via column index.
+   *
    * @param project The name of ODPS project.
-   * @param table The name of ODPS table.
-   * @param idx The index of specific column.
+   * @param table   The name of ODPS table.
+   * @param idx     The index of specific column.
    * @return Column name and type.
    */
   def getColumnByIdx(project: String, table: String, idx: Int):
-      (String, String) = {
+  (String, String) = {
     odps.setDefaultProject(project)
     val schema = odps.tables().get(table).getSchema
     val column = schema.getColumn(idx)
@@ -262,7 +272,7 @@ class OdpsUtils(odps: Odps) extends Logging{
    * Run sql on ODPS.
    *
    * @param project The name of ODPS project.
-   * @param sqlCmd An ODPS sql
+   * @param sqlCmd  An ODPS sql
    * @return An instance of ODPS.
    */
   def runSQL(project: String, sqlCmd: String, hints: Map[String, String] = Map.empty): Instance = {
@@ -278,12 +288,13 @@ class OdpsUtils(odps: Odps) extends Logging{
 
   /**
    * Get all partition [[PartitionSpec]] of specific ODPS table.
+   *
    * @param project The name of ODPS project.
-   * @param table The name of ODPS table.
+   * @param table   The name of ODPS table.
    * @return All partition [[PartitionSpec]]
    */
   def getAllPartitionSpecs(table: String, project: String = null):
-      Iterator[PartitionSpec] = {
+  Iterator[PartitionSpec] = {
     if (project != null) {
       odps.setDefaultProject(project)
     }
@@ -295,7 +306,7 @@ class OdpsUtils(odps: Odps) extends Logging{
    * Check if the table is a partition table
    *
    * @param project The name of ODPS project.
-   * @param table The name of ODPS table.
+   * @param table   The name of ODPS table.
    * @return
    */
   def isPartitionTable(table: String, project: String = null): Boolean = {
@@ -309,7 +320,7 @@ class OdpsUtils(odps: Odps) extends Logging{
    * Check if the table exists
    *
    * @param project The name of ODPS project.
-   * @param table The name of ODPS table.
+   * @param table   The name of ODPS table.
    * @return
    */
   def tableExist(table: String, project: String = null): Boolean = {
@@ -323,8 +334,9 @@ class OdpsUtils(odps: Odps) extends Logging{
    * Check if the partition exists in the table,
    *
    * `partitionSpec` like `pt='xxx',ds='yyy'`
+   *
    * @param project The name of ODPS project.
-   * @param table The name of ODPS table.
+   * @param table   The name of ODPS table.
    * @return
    */
   def partitionExist(partitionSpec: String, table: String, project: String = null): Boolean = {
@@ -343,7 +355,7 @@ class OdpsUtils(odps: Odps) extends Logging{
 
 object OdpsUtils {
   def apply(accessKeyId: String, accessKeySecret: String, odpsUrl: String):
-      OdpsUtils = {
+  OdpsUtils = {
     val account = new AliyunAccount(accessKeyId, accessKeySecret)
     val odps = new Odps(account)
     odps.setEndpoint(odpsUrl)
@@ -386,8 +398,13 @@ object OdpsUtils {
         if (v != null) new Char(v.asInstanceOf[UTF8String].toString, ti.getLength)
         else null
       case OdpsType.DATE => v: Object =>
-        if (v != null) new java.sql.Date(v.asInstanceOf[Int].toLong * (3600 * 24 * 1000))
-        else null
+        if (v != null) {
+          if (v.isInstanceOf[java.sql.Date]) {
+            v
+          } else {
+            new java.sql.Date(v.asInstanceOf[Int].toLong * (3600 * 24 * 1000))
+          }
+        } else null
       case OdpsType.TIMESTAMP => v: Object =>
         if (v != null) v.asInstanceOf[java.sql.Timestamp]
         else null
@@ -467,20 +484,21 @@ object OdpsUtils {
         } else {
           v.asInstanceOf[java.util.Date].getTime.toInt
         }
-      case OdpsType.STRING => (v: Object) => v match {
-        case str: String =>
-          if(!isDatasource) {
-            str
-          } else {
-            UTF8String.fromString(str)
-          }
-        case bytes: Array[Byte] =>
-          if (!isDatasource) {
-            new String(bytes)
-          } else {
-            UTF8String.fromBytes(bytes)
-          }
-      }
+      case OdpsType.STRING => (v: Object) =>
+        v match {
+          case str: String =>
+            if (!isDatasource) {
+              str
+            } else {
+              UTF8String.fromString(str)
+            }
+          case bytes: Array[Byte] =>
+            if (!isDatasource) {
+              new String(bytes)
+            } else {
+              UTF8String.fromBytes(bytes)
+            }
+        }
       case OdpsType.DECIMAL => (v: Object) => {
         val ti = t.asInstanceOf[DecimalTypeInfo]
         if (ti.getPrecision == 54 && ti.getScale == 18) {
@@ -498,16 +516,28 @@ object OdpsUtils {
         UTF8String.fromString(char.getValue.substring(0, char.length()))
       }
       case OdpsType.DATE => (v: Object) =>
+        val date = v match {
+          case date: Date =>
+            date
+          case _ =>
+            java.sql.Date.valueOf(v.asInstanceOf[LocalDate])
+        }
         if (!isDatasource) {
-          v.asInstanceOf[java.sql.Date]
+          date
         } else {
-          v.asInstanceOf[java.sql.Date].getTime
+          date.getTime.toInt
         }
       case OdpsType.TIMESTAMP => (v: Object) => {
+        val ts = v match {
+          case timestamp: Timestamp =>
+            timestamp
+          case _ =>
+            java.sql.Timestamp.from(v.asInstanceOf[Instant])
+        }
         if (!isDatasource) {
-          v.asInstanceOf[java.sql.Timestamp]
+          ts
         } else {
-          v.asInstanceOf[java.sql.Timestamp].getTime * 1000
+          ts.getTime * 1000
         }
       }
       case OdpsType.FLOAT => (v: Object) => v.asInstanceOf[java.lang.Float]
