@@ -42,7 +42,7 @@ class OdpsOps(@transient sc: SparkContext, accessKeyId: String,
 
   odps.setEndpoint(odpsUrl)
   @transient val tunnel = new TableTunnel(odps)
-  tunnel.setEndpoint(tunnelUrl)
+//  tunnel.setEndpoint(tunnelUrl)
   @transient val odpsUtils = new OdpsUtils(odps)
   val dateFormat = new SimpleDateFormat("yyyy-MM-dd")
 
@@ -579,7 +579,7 @@ class OdpsOps(@transient sc: SparkContext, accessKeyId: String,
       odps_.setDefaultProject(project)
       odps_.setEndpoint(odpsUrl)
       val tunnel_ = new TableTunnel(odps_)
-      tunnel_.setEndpoint(tunnelUrl)
+//      tunnel_.setEndpoint(tunnelUrl)
       val partitionSpec_ = new PartitionSpec(partition)
       val uploadSession_ = tunnel_.getUploadSession(project, table,
         partitionSpec_, uploadId)
@@ -652,7 +652,7 @@ class OdpsOps(@transient sc: SparkContext, accessKeyId: String,
       odps_.setDefaultProject(project)
       odps_.setEndpoint(odpsUrl)
       val tunnel_ = new TableTunnel(odps_)
-      tunnel_.setEndpoint(tunnelUrl)
+//      tunnel_.setEndpoint(tunnelUrl)
       val uploadSession_ = tunnel_.getUploadSession(project, table, uploadId)
       val writer = uploadSession_.openRecordWriter(context.partitionId)
 

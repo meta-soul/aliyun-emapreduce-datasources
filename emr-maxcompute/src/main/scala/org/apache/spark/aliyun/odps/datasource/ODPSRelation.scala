@@ -44,7 +44,7 @@ case class ODPSRelation(
 
   odps.setEndpoint(odpsUrl)
   @transient val tunnel = new TableTunnel(odps)
-  tunnel.setEndpoint(tunnelUrl)
+//  tunnel.setEndpoint(tunnelUrl)
   @transient val odpsUtils = new OdpsUtils(odps)
 
   override val needConversion: Boolean = false

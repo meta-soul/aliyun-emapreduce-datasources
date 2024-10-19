@@ -36,7 +36,7 @@ class ODPSWriter(
 
   odps.setEndpoint(odpsUrl)
   @transient val tunnel = new TableTunnel(odps)
-  tunnel.setEndpoint(tunnelUrl)
+//  tunnel.setEndpoint(tunnelUrl)
   @transient val odpsUtils = new OdpsUtils(odps)
 
   private val log = LoggerFactory.getLogger(getClass)
@@ -104,7 +104,7 @@ class ODPSWriter(
       odps.setDefaultProject(project)
       odps.setEndpoint(odpsUrl)
       val tunnel = new TableTunnel(odps)
-      tunnel.setEndpoint(tunnelUrl)
+//      tunnel.setEndpoint(tunnelUrl)
       val uploadSession = if (isPartitionTable) {
         val parSpec = new PartitionSpec(partitionSpec)
         tunnel.createUploadSession(project, table, parSpec)
@@ -115,7 +115,7 @@ class ODPSWriter(
 
       def writeToFile(odps: Odps, schema: Array[(String, TypeInfo)], iter: Iterator[Row]) {
         val tunnel_ = new TableTunnel(odps)
-        tunnel_.setEndpoint(tunnelUrl)
+//        tunnel_.setEndpoint(tunnelUrl)
         val uploadSession_ = if (isPartitionTable) {
           val parSpec = new PartitionSpec(partitionSpec)
           tunnel_.getUploadSession(project, table, parSpec, uploadId)

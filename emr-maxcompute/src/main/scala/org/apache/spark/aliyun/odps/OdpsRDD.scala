@@ -76,7 +76,7 @@ class OdpsRDD[T: ClassTag](@transient sc: SparkContext,
       odps.setDefaultProject(project)
       odps.setEndpoint(odpsUrl)
       val tunnel = new TableTunnel(odps)
-      tunnel.setEndpoint(tunnelUrl)
+//      tunnel.setEndpoint(tunnelUrl)
       var downloadSession: TableTunnel#DownloadSession = null
       if(part.equals("Non-Partitioned")) {
         downloadSession = tunnel.createDownloadSession(project, table)

@@ -54,7 +54,7 @@ class ODPSRDD(
       odps.setDefaultProject(project)
       odps.setEndpoint(odpsUrl)
       val tunnel = new TableTunnel(odps)
-      tunnel.setEndpoint(tunnelUrl)
+//      tunnel.setEndpoint(tunnelUrl)
       var downloadSession: TableTunnel#DownloadSession = null
       if (partitionSpec.equals("Non-Partitioned")) {
         downloadSession = tunnel.createDownloadSession(project, table)
@@ -130,7 +130,7 @@ class ODPSRDD(
     odps.setDefaultProject(project)
     odps.setEndpoint(odpsUrl)
     val tunnel = new TableTunnel(odps)
-    tunnel.setEndpoint(tunnelUrl)
+//    tunnel.setEndpoint(tunnelUrl)
     var downloadSession: TableTunnel#DownloadSession = null
     if (partitionSpec == null || partitionSpec.equals("Non-Partitioned")) {
       downloadSession = tunnel.createDownloadSession(project, table)
